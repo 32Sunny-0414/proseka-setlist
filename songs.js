@@ -1,5 +1,5 @@
 window.SEKALIVE_CATALOG = {
-  "version": 1792766969135,
+  "version": 1793593506340,
   "songs": [
     {
       "id": "song_0a3a6e1c-a146-490e-9580-33cb1ecf5a4e",
@@ -1973,6 +1973,15 @@ window.SEKALIVE_CATALOG = {
       ]
     },
     {
+      "id": "song_792ec009-47a9-4756-9771-0ad81ba75354",
+      "title": "再会",
+      "unit": "ln",
+      "category": "cover_debut",
+      "virtualSingers": [
+        "luka"
+      ]
+    },
+    {
       "id": "song_c4332db9-8781-431d-aef7-c16ff561f721",
       "title": "ハッピーシンセサイザ",
       "unit": "mmj",
@@ -2862,6 +2871,15 @@ window.SEKALIVE_CATALOG = {
       ]
     },
     {
+      "id": "song_693387a5-c780-41d3-8a56-5e0d7d286e06",
+      "title": "プレデター",
+      "unit": "vbs",
+      "category": "cover_debut",
+      "virtualSingers": [
+        "kaito"
+      ]
+    },
+    {
       "id": "song_6befa64e-623e-411b-aff6-022563b20ac2",
       "title": "ブリキノダンス",
       "unit": "wxs",
@@ -3305,6 +3323,15 @@ window.SEKALIVE_CATALOG = {
       "category": "cover_debut",
       "virtualSingers": [
         "miku"
+      ]
+    },
+    {
+      "id": "song_cb62ba94-029a-4203-bf7d-94d9f48f6b4e",
+      "title": "バカ通信",
+      "unit": "wxs",
+      "category": "cover_debut",
+      "virtualSingers": [
+        "meiko"
       ]
     },
     {
