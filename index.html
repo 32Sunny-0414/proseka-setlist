@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>セカライセトリメーカー</title>
+  <link rel="icon" type="image/png" href="./setlist-icon.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+  <main class="container">
+    <header class="page-header">
+      <p class="subtitle">自分だけのセットリストを作ろう</p>
+      <h1>セカライセトリメーカー</h1>
+      <p>候補曲を選び、セトリA・Bを組み立てるツールです。</p>
+    </header>
+    <!-- タブ切り替え時に戻る位置 -->
+<div id="sheet-start"></div>
+
+<div class="sheet-navigation">
+  <nav
+    class="sheet-tabs"
+    role="tablist"
+    aria-label="作業画面"
+  >
+    <button
+      id="sheet-tab-songs"
+      type="button"
+      role="tab"
+      data-sheet="songs"
+      aria-controls="sheet-panel-songs"
+      aria-selected="true"
+      tabindex="0"
+    >
+      選曲
+    </button>
+
+    <button
+      id="sheet-tab-setlists"
+      type="button"
+      role="tab"
+      data-sheet="setlists"
+      aria-controls="sheet-panel-setlists"
+      aria-selected="false"
+      tabindex="-1"
+    >
+      セトリ編集
+    </button>
+
+    <button
+      id="sheet-tab-storage"
+      type="button"
+      role="tab"
+      data-sheet="storage"
+      aria-controls="sheet-panel-storage"
+      aria-selected="false"
+      tabindex="-1"
+    >
+      保存・読み込み
+    </button>
+  </nav>
+
+  <p id="sheet-save-status" class="sheet-save-status"></p>
+</div>
+
+<section class="panel" aria-labelledby="save-title">
+  <h2 id="save-title">保存・読み込み</h2>
+
+  <p class="helper">
+    自動保存は、この端末・ブラウザだけで有効です。
+    別の端末への移行やバックアップには、保存ファイルを使ってください。
+  </p>
+
+  <div class="save-actions">
+    <button id="export-button" type="button">
+      保存ファイルを書き出す
+    </button>
+
+    <button id="import-button" type="button">
+      保存ファイルを読み込む
+    </button>
+
+    <button id="reset-button" type="button">
+      選択内容を初期化
+    </button>
+  </div>
+
+  <input
+    id="import-file"
+    type="file"
+    accept=".json,application/json"
+    hidden
+  >
+
+  <p id="save-status" class="helper" role="status">
+    保存機能を準備しています…
+  </p>
+
+</section>
+
+    <p id="error-message" class="error" role="alert" hidden></p>
+
+    <section class="panel" aria-labelledby="summary-title">
+  <h2 id="summary-title">楽曲数・VS集計</h2>
+
+  <fieldset class="summary-switch">
+    <legend>集計対象</legend>
+
+    <div class="summary-switch-options">
+      <label>
+        <input
+          type="radio"
+          name="summary-target"
+          value="candidates"
+          checked
+        >
+        <span>候補曲</span>
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="summary-target"
+          value="A"
+        >
+        <span>セトリA</span>
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="summary-target"
+          value="B"
+        >
+        <span>セトリB</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <p id="summary-target-status" class="helper" role="status"></p>
+
+  <h3 id="category-summary-title" class="summary-subtitle">
+    ユニット・区分別の楽曲数
+  </h3>
+
+  <div
+    id="category-summary"
+    class="table-scroll summary-table-scroll"
+    role="region"
+    aria-labelledby="category-summary-title"
+    tabindex="0"
+  ></div>
+
+  <h3 id="singer-summary-title" class="summary-subtitle">
+    ユニット・VS別の登場回数
+  </h3>
+
+  <div
+    id="summary"
+    class="table-scroll summary-table-scroll"
+    role="region"
+    aria-labelledby="singer-summary-title"
+    tabindex="0"
+  ></div>
+
+</section>
+
+    <section class="panel" aria-labelledby="song-list-title">
+      <div class="section-header">
+        <h2 id="song-list-title">候補曲を選ぶ</h2>
+        <p id="song-count">読み込み中…</p>
+      </div>
+
+      <div class="filters">
+        <label>
+          ユニット
+          <select id="unit-filter"></select>
+        </label>
+
+        <label>
+          区分
+          <select id="category-filter"></select>
+        </label>
+
+        <label>
+          歌唱VS
+          <select id="singer-filter"></select>
+        </label>
+
+        <label>
+          曲名検索
+          <input
+            id="song-search"
+            type="search"
+            placeholder="曲名の一部を入力"
+          >
+        </label>
+
+        <label class="check-label">
+          <input id="selected-only" type="checkbox">
+          選択した候補曲だけ表示
+        </label>
+      </div>
+      <details class="custom-song-panel">
+  <summary>＋ 楽曲を追加する</summary>
+
+  <p class="helper">
+    追加した曲は、自分のブラウザに保存されます。
+    保存ファイルを書き出すと、追加曲も一緒に持ち出せます。
+  </p>
+
+  <form id="custom-song-form">
+    <div class="custom-song-fields">
+      <label>
+        曲名
+        <input
+          id="custom-song-title"
+          type="text"
+          maxlength="200"
+          placeholder="追加する曲名"
+          required
+        >
+      </label>
+
+      <label>
+        ユニット
+        <select id="custom-song-unit" required></select>
+      </label>
+
+      <label>
+        区分
+        <select id="custom-song-category" required></select>
+      </label>
+    </div>
+
+    <fieldset class="custom-song-singers">
+      <legend>歌唱するバーチャルシンガー</legend>
+
+      <div id="custom-song-singer-options"></div>
+
+      <p class="helper">
+        複数選択できます。歌唱VSがいない場合は、すべて未選択にします。
+      </p>
+    </fieldset>
+
+    <button type="submit">楽曲を追加して候補にする</button>
+  </form>
+
+  <p id="custom-song-status" class="helper" role="status"></p>
+</details>
+      <div id="song-list" class="song-list"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="setlists-title">
+      <h2 id="setlists-title">セトリを組む</h2>
+      <p class="helper">
+        候補に選んだ曲を配置できます。同じ曲をA・Bの両方で使えます。
+      </p>
+
+      <div class="setlists-grid">
+        <section aria-labelledby="setlist-a-title">
+          <h3 id="setlist-a-title">セトリA</h3>
+          <div id="setlist-A"></div>
+        </section>
+
+        <section aria-labelledby="setlist-b-title">
+          <h3 id="setlist-b-title">セトリB</h3>
+          <div id="setlist-B"></div>
+        </section>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="image-export-title">
+  <h2 id="image-export-title">③ セトリを画像にする</h2>
+
+  <p class="helper">
+    セトリA・Bを左右に並べた1枚のPNG画像を作成します。
+  </p>
+
+  <label class="image-title-label" for="image-title">
+    画像に表示するタイトル
+  </label>
+
+  <input
+    id="image-title"
+    type="text"
+    maxlength="80"
+    value="プロセカ セットリスト予想"
+  >
+
+  <div class="save-actions">
+    <button id="create-image-button" type="button">
+      A・Bを1枚の画像にする
+    </button>
+  </div>
+
+  <p id="image-status" class="helper" role="status"></p>
+
+  <div id="image-result" hidden>
+    <a id="image-download" class="image-download">
+      PNG画像を保存
+    </a>
+
+    <p class="helper">
+      スマートフォンでは、画像を長押しして保存することもできます。
+      セトリを変更した場合は、もう一度画像を作成してください。
+    </p>
+
+    <img
+      id="image-preview"
+      alt="セトリAとセトリBの画像プレビュー"
+    >
+  </div>
+</section>
+  </main>
+
+<script src="./songs.js"></script>
+<script src="./song-characters.js"></script>
+<script src="./app.js"></script>
+<script src="./image-export.js"></script>
+<script src="./sheet-tabs.js"></script>
+</body>
+</html>
