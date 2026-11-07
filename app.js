@@ -720,12 +720,23 @@ function canSwapPick(from, to) {
 function swapPickSlots(from, to) {
   if (!canSwapPick(from, to)) return false;
   const slots = pickSlots(state.selectionGrid, from.u, from.c);
-  if (scopeConflict(slots[from.i], state.scopes[from.c][scopeIndex(from.c,to.i)]) ||
-      scopeConflict(slots[to.i], state.scopes[from.c][scopeIndex(from.c,from.i)])) return false;
+  const first = slots[from.i], second = slots[to.i];
+  // 空欄への移動では曲を消さず、従来どおり使用先との矛盾を確認する。
+  if (!second && scopeConflict(first, state.scopes[from.c][scopeIndex(from.c,to.i)])) return false;
+  // 両方に曲がある場合は一度のmapで同時交換する。
+  // 連続した置換による二重置換を防ぎ、空欄と他の曲順を維持する。
+  const nextLists = {};
+  for (const name of ["A", "B"]) {
+    nextLists[name] = second
+      ? state.setlists[name].map(id => id === first ? second : id === second ? first : id)
+      : [...state.setlists[name]];
+  }
   for (const u of (from.c === "world_link" ? unitKeys : [from.u])) {
     const row = state.selectionGrid[u][from.c];
     [row[from.i],row[to.i]] = [row[to.i],row[from.i]];
   }
+  state.setlists.A = nextLists.A;
+  state.setlists.B = nextLists.B;
   activeSlot = {...to};
   renderAll();
   document.getElementById(slotKey(to.u,to.c,to.i))?.focus({preventScroll:true});
