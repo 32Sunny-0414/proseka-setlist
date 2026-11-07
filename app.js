@@ -706,19 +706,71 @@ function chooseSlot(u,c,i,next) {
   if (next) state.selectedIds.add(next);
   renderAll();
 }
-function shiftPick(step) {
-  const {u,c,i} = activeSlot;
-  const slots = pickSlots(state.selectionGrid,u,c), j = i + step;
-  if (j < 0 || j >= slots.length) return;
-  if(scopeConflict(slots[i],state.scopes[c][scopeIndex(c,j)]) ||
-     scopeConflict(slots[j],state.scopes[c][scopeIndex(c,i)])) return;
-  for(const row of (c==="world_link" ? unitKeys : [u])) {
-    const values=state.selectionGrid[row][c];
-    [values[i],values[j]]=[values[j],values[i]];
+// 選曲枠は同一区分・同一ユニット内で交換する
+let pickDragSource = null;
+function canSwapPick(from, to) {
+  if (!from || !to || from.c !== to.c || from.u !== to.u || from.i === to.i) return false;
+  const slots = pickSlots(state.selectionGrid, from.u, from.c);
+  if (!Number.isInteger(from.i) || !Number.isInteger(to.i) ||
+      from.i < 0 || to.i < 0 || from.i >= slots.length || to.i >= slots.length || !slots[from.i]) return false;
+  if (from.c === "world_link" && slots[to.i] &&
+      songById.get(slots[from.i]).unit !== songById.get(slots[to.i]).unit) return false;
+  return true;
+}
+function swapPickSlots(from, to) {
+  if (!canSwapPick(from, to)) return false;
+  const slots = pickSlots(state.selectionGrid, from.u, from.c);
+  if (scopeConflict(slots[from.i], state.scopes[from.c][scopeIndex(from.c,to.i)]) ||
+      scopeConflict(slots[to.i], state.scopes[from.c][scopeIndex(from.c,from.i)])) return false;
+  for (const u of (from.c === "world_link" ? unitKeys : [from.u])) {
+    const row = state.selectionGrid[u][from.c];
+    [row[from.i],row[to.i]] = [row[to.i],row[from.i]];
   }
-  activeSlot = {u,c,i:j};
+  activeSlot = {...to};
   renderAll();
-  document.getElementById(slotKey(u,c,j))?.focus({preventScroll:true});
+  document.getElementById(slotKey(to.u,to.c,to.i))?.focus({preventScroll:true});
+  return true;
+}
+function clearPickDrag() {
+  pickDragSource = null;
+  document.querySelectorAll(".pick-drop-target").forEach(e=>e.classList.remove("pick-drop-target"));
+}
+function bindPickDrop(cell, target) {
+  cell.addEventListener("dragover", e=>{
+    if (!canSwapPick(pickDragSource,target)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect="move";
+    cell.classList.add("pick-drop-target");
+  });
+  cell.addEventListener("dragleave", e=>{
+    if (!cell.contains(e.relatedTarget)) cell.classList.remove("pick-drop-target");
+  });
+  cell.addEventListener("drop", e=>{
+    e.preventDefault();
+    const from=pickDragSource;
+    clearPickDrag();
+    swapPickSlots(from,target);
+  });
+}
+function createPickDragHandle(source) {
+  const grip = document.createElement("span");
+  grip.className="pick-drag-handle";
+  grip.textContent="⠿";
+  grip.draggable=true;
+  grip.title="同じユニット・同じ区分の枠へドラッグして交換";
+  grip.setAttribute("aria-label",grip.title);
+  grip.addEventListener("dragstart", e=>{
+    pickDragSource={...source};
+    e.dataTransfer.setData("text/plain",slotKey(source.u,source.c,source.i));
+    e.dataTransfer.effectAllowed="move";
+  });
+  grip.addEventListener("dragend",clearPickDrag);
+  return grip;
+}
+
+function shiftPick(step) {
+  if (!activeSlot) return;
+  swapPickSlots(activeSlot,{...activeSlot,i:activeSlot.i+step});
 }
 function renderPickDetail() {
   const panel = document.getElementById("pick-detail");
@@ -846,6 +898,7 @@ function renderSongs(withDetail=true) {
     pool.get(key).push(song);
   }
   function drawSlot(td,u,c,id,i) {
+      bindPickDrop(td,{u,c,i});
       const sel=document.createElement("select"), key=slotKey(u,c,i);
       if (filters.selectedOnly && !id) { td.textContent="—"; return; }
       sel.id=key; sel.setAttribute("aria-label",slotLabel(u,c,i));
@@ -884,6 +937,7 @@ function renderSongs(withDetail=true) {
         appendPickSingerBars(td, id);
         const footer = document.createElement("div");
         footer.className = "pick-footer";
+        footer.append(createPickDragHandle({u,c,i}));
         while (wrap.nextSibling) footer.append(wrap.nextSibling);
         td.append(footer);
       }

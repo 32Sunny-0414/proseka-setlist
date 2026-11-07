@@ -1242,3 +1242,15 @@ main.container {
 #setlist-editor-dialog input[type=number] {width:90px}
 .editor-field {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0}
 .editor-field select {max-width:250px}
+
+/* 選曲表：同じユニット・区分の枠を交換 */
+.pick-drag-handle {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;min-width:20px;height:28px;cursor:grab;
+  user-select:none;color:#667085;font-size:20px;
+}
+.pick-drag-handle:active {cursor:grabbing}
+.pick-table .pick-drop-target {
+  outline:2px solid #4455dd;outline-offset:-2px;
+  background-color:#e9edff;
+}
